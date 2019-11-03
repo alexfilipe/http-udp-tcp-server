@@ -26,20 +26,23 @@ class Server:
         return a / b
 
     def evaluate(self, message: str) -> str:
+        """Evaluates server input and returns result."""
+
+        # Remove multiple spaces
         message = re.sub(' +', ' ', message)
 
+        # Check for number of arguments
         params = message.split(' ')
-
-        if len(params) > 3:
+        if len(params) < 3:
             raise OperationIncomplete('Not enough arguments')
 
+        # Check for supported operations
         op = params[0]
-
         if op not in self.operations:
             raise InvalidOperation('Operation not supported')
 
+        # Run operations and return result
         result = 0
-
         a = int(params[1])
         b = int(params[2])
 
