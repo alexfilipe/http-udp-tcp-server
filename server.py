@@ -1,12 +1,20 @@
 import re
+import socket
+
 
 class OperationIncomplete(ValueError):
     pass
 
+
 class InvalidOperation(ValueError):
     pass
 
-class Server:
+
+class Status300(SystemError):
+    pass
+
+
+class Calculator:
     def __init__(self):
         self.operations = set(['+', '-', '*', '/'])
 
@@ -58,8 +66,27 @@ class Server:
         return result
 
 
+class Server:
+    """UDP server with Sockets."""
+
+    def __init__(self, host: str='127.0.0.1', port: int=50001):
+        self.host = host
+        self.port = port
+
+    def runServer(self):
+        pass
+
+
+class UDPServer(Server):
+    pass
+
+
+class TCPServer(Server):
+    pass
+
+
 if __name__ == "__main__":
-    server = Server()
-    print('Result:', server.evaluate("+  1   3"))
-    print('Result:', server.evaluate("/ 1   3"))
-    print('Result:', server.evaluate("/ 1 0"))
+    calc = Calculator()
+    print('Result:', calc.evaluate("+  1   3"))
+    print('Result:', calc.evaluate("/ 1   3"))
+    print('Result:', calc.evaluate("/ 1 0"))
