@@ -40,7 +40,6 @@ class HTTPRequest:
 
     def build_post(self, params: dict, file: str) -> str:
         """Build POST request with parameters."""
-
         if params is None:
             params = {}
 
@@ -58,9 +57,12 @@ class HTTPRequest:
         raise NotImplementedError
 
 
-    def build_request(self, params: dict, data: str=None,
+    def build_request(self, params: dict=None, data: str=None,
                       file: str="/", method: str="POST") -> str:
         """Build HTTP request with data and parameters."""
+
+        if params is None:
+            params = {}
 
         if method == "POST":
             return self.build_post(file=file, params=params)
@@ -210,21 +212,3 @@ class UDPServer(Server):
 
 class TCPServer(Server):
     pass
-
-
-if __name__ == "__main__":
-    request = HTTPRequest()
-    print(request.build_request(method="POST", params={
-        "expression": "+ 1 2"
-    }))
-
-    # response = HTTPResponse()
-
-    # print(response.build_response(status=200, data='hello'))
-    # print(response.build_response(status=406, data='-1'))
-
-
-    # calc = Calculator()
-    # print('Result:', calc.evaluate("+  1   3"))
-    # print('Result:', calc.evaluate("/ 1   3"))
-    # print('Result:', calc.evaluate("/ 1 0"))
