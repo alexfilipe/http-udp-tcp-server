@@ -1,5 +1,6 @@
 import re
 import socket
+import urllib
 from email.utils import formatdate
 
 class OperationIncomplete(ValueError):
@@ -12,9 +13,66 @@ class Status406(SystemError):
     pass
 
 class HTTPRequest:
-    pass
+    """Class for building HTTP requests."""
+
+    def __init__(self, host: str="127.0.0.1"):
+        self.http_version = "HTTP/1.1"
+
+        self.server = "calculator/0.1"
+
+        self.host = host
+
+        self.content_type = "text/plain"
+
+        self.post_template = (
+            "POST {{file}} {http_version}\n"
+            "Host: {host}\n"
+            "Content-Type: {content_type}\n"
+            "\n{{data}}"
+        )
+
+        self.post_template = self.post_template.format(
+            http_version=self.http_version,
+            host=self.host,
+            content_type=self.content_type
+        )
+
+
+    def build_post(self, params: dict, file: str) -> str:
+        """Build POST request with parameters."""
+
+        if params is None:
+            params = {}
+
+        body = urllib.parse.urlencode(params)
+
+        request = self.post_template.format(
+            file=file,
+            data=body
+        )
+
+        return request
+
+
+    def build_get(self, params: dict, data: str, file: str) -> str:
+        raise NotImplementedError
+
+
+    def build_request(self, params: dict, data: str=None,
+                      file: str="/", method: str="POST") -> str:
+        """Build HTTP request with data and parameters."""
+
+        if method == "POST":
+            return self.build_post(file=file, params=params)
+        elif method == "GET":
+            return self.build_get(file=file, data=data)
+
+        return ""
+
 
 class HTTPResponse:
+    """Class for building HTTP responses."""
+
     def __init__(self):
         self.http_version = "HTTP/1.1"
 
@@ -58,14 +116,27 @@ class HTTPResponse:
 
         return response
 
+    def build_406(self, data: str) -> str:
+        """Build 406 Not Acceptable response."""
+        if data is None:
+            data = ""
+
+        response = self.response_template.format(
+            status=self.status_codes[406],
+            date=self.gmt_date(),
+            data=data
+        )
+
+        return response
+
     def build_response(self, data: str, status: int=200) -> str:
         """Build the HTTP response."""
         response = ""
 
         if status == 200:
             response = self.build_200(data)
-        elif status == 300:
-            pass
+        elif status == 406:
+            response = self.build_406(data)
 
         return response
 
@@ -123,7 +194,7 @@ class Calculator:
 
 
 class Server:
-    """UDP server with Sockets."""
+    """UDP/TCP server with Sockets."""
 
     def __init__(self, host: str='127.0.0.1', port: int=50001):
         self.host = host
@@ -142,11 +213,18 @@ class TCPServer(Server):
 
 
 if __name__ == "__main__":
-    response = HTTPResponse()
+    request = HTTPRequest()
+    print(request.build_request(method="POST", params={
+        "expression": "+ 1 2"
+    }))
 
-    print(response.build_response(status=200, data='hello'))
+    # response = HTTPResponse()
 
-    calc = Calculator()
-    print('Result:', calc.evaluate("+  1   3"))
-    print('Result:', calc.evaluate("/ 1   3"))
+    # print(response.build_response(status=200, data='hello'))
+    # print(response.build_response(status=406, data='-1'))
+
+
+    # calc = Calculator()
+    # print('Result:', calc.evaluate("+  1   3"))
+    # print('Result:', calc.evaluate("/ 1   3"))
     # print('Result:', calc.evaluate("/ 1 0"))
