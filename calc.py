@@ -57,4 +57,8 @@ class Calculator:
         elif op == '/':
             result = self.divide(a, b)
 
+        # Normalize float to int
+        if type(result) is not int and result.is_integer():
+            result = int(result)
+
         return result
