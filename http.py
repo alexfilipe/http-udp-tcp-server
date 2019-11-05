@@ -1,5 +1,5 @@
 """HTTP Requests and Responses."""
-
+import re
 import urllib
 from email.utils import formatdate
 
@@ -33,17 +33,14 @@ class HTTPRequest:
         )
 
 
-    def __build_post(self, params: dict, file: str) -> str:
+    def __build_post(self, params: dict, data: str, file: str) -> str:
         """Build POST request with parameters."""
         if params is None:
             params = {}
 
         body = urllib.parse.urlencode(params)
 
-        request = self.post_template.format(
-            file=file,
-            data=body
-        )
+        request = self.post_template.format(file=file, data=body)
 
         return request
 
@@ -60,9 +57,9 @@ class HTTPRequest:
             params = {}
 
         if method == "POST":
-            return self.__build_post(file=file, params=params)
+            return self.__build_post(file=file, params=params, data=data)
         elif method == "GET":
-            return self.__build_get(file=file, data=data)
+            return self.__build_get(file=file, params=params, data=data)
 
         return ""
 
@@ -136,3 +133,41 @@ class HTTPResponse:
             response = self.__build_406(data)
 
         return response
+
+
+class HTTPParser:
+    """Class to parse HTTP Responses."""
+
+    def get_header_fields(self, response: str) -> dict:
+        fields = {}
+
+        for line in response.splitlines()[1:]:
+            if line == "":
+                break
+
+            split_line = line.split(" ", 1)
+            field = split_line[0][:-1]
+            fields[field] = split_line[1]
+
+        return fields
+
+    def get_contents(self, response: str) -> dict:
+        split_response = response.split("\n\n", 1)
+
+        if len(split_response) == 1:
+            return ""
+
+        return split_response[1]
+
+    def get_status_code(self, response: str) -> int:
+        first_line = response.splitlines()[0]
+        status_code = int(first_line.split(" ")[1])
+
+        return status_code
+
+    def parse_response(self, response: str) -> dict:
+        return {
+            "status": self.get_status_code(response),
+            "fields": self.get_header_fields(response),
+            "data": self.get_contents(response),
+        }
