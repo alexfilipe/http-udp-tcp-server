@@ -1,8 +1,10 @@
 """TCP/UDP Calculator Servers."""
 
-from calc import Calculator, OperationIncomplete, InvalidOperation
+from calc import (Calculator, OperationIncomplete,
+                  InvalidOperation, NotAnInteger)
 from http import HTTPResponse, HTTPParser
 import socket
+from bcolors import bcolors
 
 class Server:
     """UDP/TCP server with Sockets."""
@@ -19,23 +21,44 @@ class Server:
         self.server_socket.bind((host, port))
         self.server_socket.listen(1)
 
-    def process(self, message: str) -> str:
+    def process_request(self, message: str) -> str:
         """Processes HTTP request and returns response."""
         parser = HTTPParser()
         response = HTTPResponse()
+        calc = Calculator()
 
         request = parser.parse_request(message)
-        # print("processed request:\n", request)
 
         # Invalid request (no expression sent)
         if (not request["params"]
             or "expression" not in request["params"]):
+
+            print("Request is invalid. Missing parameters.")
             return response.build_response(status=406, data="-1")
 
         expression = request["params"]["expression"][0]
-        print("expression received:", expression)
+        print("{}Expression received:{} {}".format(bcolors.OKBLUE,
+                                                   bcolors.ENDC,
+                                                   expression))
 
-        return "nope"
+        # Evaluate the expression
+        try:
+            result = calc.evaluate(expression)
+            print("{}Expression valid{}, result = {}".format(bcolors.OKGREEN,
+                                                             bcolors.ENDC,
+                                                             result))
+
+            return response.build_response(status=200, data=result)
+
+        # Send error message if not valid
+        except Exception as exc:
+            print("{}An exception occurred:{} {} ({})"
+                  .format(bcolors.FAIL, bcolors.ENDC,
+                          str(exc), type(exc).__name__))
+
+            return response.build_response(status=406, data="-1")
+
+        return ""
 
 
     def run(self):
@@ -48,7 +71,9 @@ class TCPServer(Server):
     def run(self):
         """Runs server until Control+C is called."""
 
-        print("TCP server started.")
+        print("{}{}TCP server started.{}".format(bcolors.BOLD,
+                                                 bcolors.OKGREEN,
+                                                 bcolors.ENDC))
 
         client_socket, address = self.server_socket.accept()
 
@@ -56,12 +81,22 @@ class TCPServer(Server):
             data = client_socket.recv(self.buffer_size)
 
             if data:
-                print("Received data:\n", data.decode())
+                print("----------------")
+                print("{}{}Received packet. Data:{}\n{}".format(bcolors.BOLD,
+                                                                bcolors.OKBLUE,
+                                                                bcolors.ENDC,
+                                                                data.decode()))
 
-                response = self.process(data.decode())
+                response = self.process_request(data.decode())
+
+                print("\n{}{}Sending response. Data:{}\n{}".format(
+                      bcolors.BOLD, bcolors.OKBLUE, bcolors.ENDC, response))
                 client_socket.send(response.encode())
             else:
-                print("Connection ended.")
+                print("----------------")
+                print("{}{}Connection ended.{}".format(bcolors.BOLD,
+                                                       bcolors.WARNING,
+                                                       bcolors.ENDC))
                 break
 
         client_socket.close()

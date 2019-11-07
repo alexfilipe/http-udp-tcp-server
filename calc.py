@@ -71,4 +71,4 @@ class Calculator:
         if type(result) is not int and result.is_integer():
             result = int(result)
 
-        return result
+        return str(result)
