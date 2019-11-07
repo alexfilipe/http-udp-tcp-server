@@ -176,12 +176,12 @@ class HTTPParser:
         return fields
 
     def get_contents(self, response: str) -> dict:
-        split_response = response.split("\n\n", 1)
+        split_response = response.split("\r\n\r\n", 1)
 
         if len(split_response) == 1:
             return ""
 
-        return split_response[1]
+        return split_response[1].rstrip()
 
     def get_status_code(self, response: str) -> int:
         first_line = response.splitlines()[0]

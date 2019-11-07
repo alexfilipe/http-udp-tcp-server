@@ -9,15 +9,35 @@ class Client:
         self.client_socket = socket.socket(socket.AF_INET,
                                            socket.SOCK_STREAM)
 
+    def send(self, message: str):
+        raise NotImplementedError
+
+    def receive(self) -> str:
+        raise NotImplementedError
+
+    def http_send(self, host: str="127.0.0.1", file: str="/",
+                  method: str="GET", params: dict=None, data: str=None):
+
+        http_req = HTTPRequest(host=host)
+        request = http_req.build_request(
+            file=file,
+            method=method,
+            params=params,
+            data=data
+        )
+
+        self.send(request)
+
+
 
 class TCPClient(Client):
     """TCP Client."""
 
-    def connect(self, host: str="127.0.0.1", port: int=50123):
+    def connect(self, host: str="127.0.0.1", port: int=51234):
         """Connect to server."""
         self.client_socket.connect((host, port))
 
-    def send(self, message: str) -> bool:
+    def send(self, message: str):
         message_length = len(message)
         message = message.encode()
 
@@ -31,14 +51,10 @@ class TCPClient(Client):
 
             total_sent = total_sent + sent
 
-    def http_send(self, message: str) -> bool:
-        pass
+    def receive(self) -> str:
+        chunk = self.client_socket.recv(self.buffer_size)
 
-    def receive(self, message: str) -> str:
-        pass
+        if chunk == b"":
+            raise RuntimeError("Connection broken")
 
-    def request(self, message: str) -> str:
-        return None
-
-    def http_request(self, message: str) -> str:
-        pass
+        return chunk
