@@ -1,16 +1,25 @@
 from http import HTTPRequest, HTTPResponse, HTTPParser
 
+http_parser = HTTPParser()
+
 http_req = HTTPRequest(host="127.0.0.1")
 
 print(http_req.build_request(
     method="POST",
-    params={
-        "expression": "+ 1 2"
-    }
+    params={"expression": "+ 1 2"}
 ), "\n")
 
+request1 = http_req.build_request(
+    method="POST",
+    file="/testfilename",
+    params={"expression": "* 5 6"}
+)
+
+print("Request 1:")
+print(request1)
+print("Parsed request:", http_parser.parse_request(request1))
+
 http_resp = HTTPResponse()
-http_parser = HTTPParser()
 
 response1 = http_resp.build_response(status=406, data=-1)
 parsed_response1 = http_parser.parse_response(response1)

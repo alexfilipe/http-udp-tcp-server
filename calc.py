@@ -8,6 +8,9 @@ class OperationIncomplete(ValueError):
 class InvalidOperation(ValueError):
     pass
 
+class NotAnInteger(ValueError):
+    pass
+
 class Calculator:
     def __init__(self):
         self.operations = set(['+', '-', '*', '/'])
@@ -31,6 +34,7 @@ class Calculator:
         """Evaluates server input and returns result."""
 
         # Remove multiple spaces
+        message = message.strip()
         message = re.sub(' +', ' ', message)
 
         # Check for number of arguments
@@ -43,10 +47,16 @@ class Calculator:
         if op not in self.operations:
             raise InvalidOperation('Operation not supported')
 
+        # TODO: ASK IF STRING CAN BE e.g. 2.0
+        # Transform strings in integers
+        try:
+            a = int(params[1])
+            b = int(params[2])
+        except ValueError:
+            raise NotAnInteger('One of the operands is not an integer')
+
         # Run operations and return result
         result = 0
-        a = int(params[1])
-        b = int(params[2])
 
         if op == '+':
             result = self.add(a, b)

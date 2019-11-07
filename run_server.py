@@ -1,5 +1,6 @@
 from http import HTTPRequest, HTTPResponse
 from calc import Calculator
+from bcolors import bcolors
 
 http_req = HTTPRequest(host="127.0.0.1")
 http_resp = HTTPResponse()
@@ -7,7 +8,8 @@ calc = Calculator()
 
 exp = ""
 while True:
-    print("Type in your expression: ", end="")
+    print("{}{}Type in your expression: {}"
+          .format(bcolors.OKBLUE, bcolors.BOLD, bcolors.ENDC), end="")
     exp = input()
 
     print()
@@ -19,11 +21,11 @@ while True:
         "expression": exp
     })
 
-    print("Making HTTP request...")
+    print("{}Making HTTP request...{}".format(bcolors.OKGREEN, bcolors.ENDC))
     print("----------------------")
     print(request, "\n")
 
-    print("Evaluating expression...")
+    print("{}Evaluating expression...{}".format(bcolors.OKGREEN, bcolors.ENDC))
     print("------------------------")
 
     try:
@@ -31,7 +33,7 @@ while True:
 
         print("Calculation result:", result, "\n")
 
-        print("Retrieving HTTP response...")
+        print("{}Retrieving HTTP response...{}".format(bcolors.OKGREEN, bcolors.ENDC))
         print("---------------------------")
 
         response = http_resp.build_response(status=200, data=result)
@@ -42,7 +44,7 @@ while True:
             str(ex), type(ex).__name__
         ), "\n")
 
-        print("Retrieving HTTP response...")
+        print("{}Retrieving HTTP response...{}".format(bcolors.OKGREEN, bcolors.ENDC))
         print("---------------------------")
 
         response = http_resp.build_response(status=406, data=-1)

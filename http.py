@@ -93,9 +93,11 @@ class HTTPResponse:
             content_type=self.content_type
         )
 
+
     def __gmt_date(self):
         """Return current datetime in GMT format."""
         return formatdate(timeval=None, localtime=False, usegmt=True)
+
 
     def __build_200(self, data: str=None) -> str:
         """Build 200 OK response."""
@@ -110,6 +112,7 @@ class HTTPResponse:
 
         return response
 
+
     def __build_406(self, data: str=None) -> str:
         """Build 406 Not Acceptable response."""
         if data is None:
@@ -122,6 +125,7 @@ class HTTPResponse:
         )
 
         return response
+
 
     def build_response(self, data: str=None, status: int=200) -> str:
         """Build the HTTP response."""
@@ -162,7 +166,6 @@ class HTTPParser:
     def get_status_code(self, response: str) -> int:
         first_line = response.splitlines()[0]
         status_code = int(first_line.split(" ")[1])
-
         return status_code
 
     def parse_response(self, response: str) -> dict:
@@ -170,4 +173,26 @@ class HTTPParser:
             "status": self.get_status_code(response),
             "fields": self.get_header_fields(response),
             "data": self.get_contents(response),
+        }
+
+    def get_params(self, request: str) -> dict:
+        params = self.get_contents(request)
+
+        if params:
+            return urllib.parse.parse_qs(params)
+
+        return {}
+
+    def get_method(self, request: str) -> str:
+        return request.splitlines()[0].split(" ")[0]
+
+    def get_filename(self, request: str) -> str:
+        return request.splitlines()[0].split(" ")[1]
+
+    def parse_request(self, request: str) -> dict:
+        return {
+            "method": self.get_method(request),
+            "fields": self.get_header_fields(request),
+            "file": self.get_filename(request),
+            "params": self.get_params(request)
         }

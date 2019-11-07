@@ -1,4 +1,4 @@
-from calc import Calculator, OperationIncomplete, InvalidOperation
+from calc import Calculator, OperationIncomplete, InvalidOperation, NotAnInteger
 
 calc = Calculator()
 
@@ -20,4 +20,10 @@ except OperationIncomplete as e:
 try:
     print(calc.evaluate("& 2 3"))
 except InvalidOperation as e:
+    print(str(e))
+
+
+try:
+    print(calc.evaluate("/ 2 3.4"))
+except NotAnInteger as e:
     print(str(e))
