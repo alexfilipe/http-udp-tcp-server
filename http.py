@@ -19,43 +19,58 @@ class HTTPRequest:
 
         self.content_type = "text/plain"
 
-        self.post_template = (
-            "POST {{file}} {http_version}\n"
-            "Host: {host}\n"
-            "Content-Type: {content_type}\n"
-            "\n{{data}}"
+        self.post_header_template = (
+            "POST {{file}} {http_version}\r\n"
+            "Host: {host}\r\n"
+            "Content-Type: {content_type}\r\n"
         )
 
-        self.post_template = self.post_template.format(
+        self.post_header_template = self.post_header_template.format(
             http_version=self.http_version,
             host=self.host,
             content_type=self.content_type
         )
 
+        self.get_header_template = (
+            "GET {{file}} {http_version}\r\n"
+            "Host: {host}\r\n"
+            "Content-Type: {content_type}\r\n"
+        )
+
+        self.get_header_template = self.get_header_template.format(
+            http_version=self.http_version,
+            host=self.host,
+            content_type=self.content_type
+        )
 
     def __build_post(self, params: dict, data: str, file: str) -> str:
         """Build POST request with parameters."""
-        if params is None:
-            params = {}
+        request = self.post_header_template.format(file=file)
 
-        body = urllib.parse.urlencode(params)
-
-        request = self.post_template.format(file=file, data=body)
+        if params is not None:
+            body = urllib.parse.urlencode(params)
+            request += "\r\n{}\r\n".format(body)
+        else:
+            request += "\r\n"
 
         return request
 
 
     def __build_get(self, params: dict, data: str, file: str) -> str:
-        raise NotImplementedError
+        request = self.get_header_template.format(file=file)
+
+        if params is not None:
+            body = urllib.parse.urlencode(params)
+            request += "\r\n{}\r\n".format(body)
+        else:
+            request += "\r\n"
+
+        return request
 
 
     def build_request(self, params: dict=None, data: str=None,
                       file: str="/", method: str="POST") -> str:
         """Build HTTP request with data and parameters."""
-
-        if params is None:
-            params = {}
-
         if method == "POST":
             return self.__build_post(file=file, params=params, data=data)
         elif method == "GET":
@@ -79,15 +94,14 @@ class HTTPResponse:
 
         self.server = "calculator/0.1"
 
-        self.response_template = (
-            "{version} {{status}}\n"
-            "Date: {{date}}\n"
-            "Content-Type: {content_type}\n"
-            "Server: {server}\n"
-            "\n{{data}}"
+        self.response_header_template = (
+            "{version} {{status}}\r\n"
+            "Date: {{date}}\r\n"
+            "Content-Type: {content_type}\r\n"
+            "Server: {server}\r\n"
         )
 
-        self.response_template = self.response_template.format(
+        self.response_header_template = self.response_header_template.format(
             version=self.http_version,
             server=self.server,
             content_type=self.content_type
@@ -96,33 +110,39 @@ class HTTPResponse:
 
     def __gmt_date(self):
         """Return current datetime in GMT format."""
+
         return formatdate(timeval=None, localtime=False, usegmt=True)
 
 
     def __build_200(self, data: str=None) -> str:
         """Build 200 OK response."""
-        if data is None:
-            data = ""
 
-        response = self.response_template.format(
+        response = self.response_header_template.format(
             status=self.status_codes[200],
             date=self.__gmt_date(),
             data=data
         )
+
+        if data is not None:
+            response += "\r\n{}\r\n".format(data)
+        else:
+            response += "\r\n"
 
         return response
 
 
     def __build_406(self, data: str=None) -> str:
         """Build 406 Not Acceptable response."""
-        if data is None:
-            data = ""
-
-        response = self.response_template.format(
+        response = self.response_header_template.format(
             status=self.status_codes[406],
             date=self.__gmt_date(),
             data=data
         )
+
+        if data is not None:
+            response += "\r\n{}\r\n".format(data)
+        else:
+            response += "\r\n"
 
         return response
 
