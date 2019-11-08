@@ -1,15 +1,16 @@
-"""Runs the TCP Client sending expressions from file."""
+"""Runs the UDP Reliable Client sending expressions from file."""
 import sys
 from bcolors import bcolors
-from client import parse_expression, TCPClient
+from client import parse_expression, UDPReliableClient
 
 if len(sys.argv) > 1:
     filepath = sys.argv[1]
 else:
     filepath = "expressions.txt"
 
-tc = TCPClient(debug=True)
-tc.connect(host="127.0.0.1", port=50123)
+urc = UDPReliableClient(debug=True,
+                        server_port=50321,
+                        server_addr="127.0.0.1")
 
 # Read file with expressions
 with open(filepath) as fp:
@@ -20,13 +21,15 @@ with open(filepath) as fp:
         # Remove leading character
         line = line.replace("\n", "")
 
-        tc.http_send(
+        urc.http_send(
+            host="127.0.0.1",
+            port=50123,
             file="/",
             method="POST",
             params={"expression": line}
         )
 
-        response = tc.result()
+        response = urc.result()
 
         if response is not False:
             exp = parse_expression(line)

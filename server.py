@@ -1,25 +1,23 @@
 """TCP/UDP Calculator Servers."""
-
+import sys
 from calc import (Calculator, OperationIncomplete,
                   InvalidOperation, NotAnInteger)
 from http import HTTPResponse, HTTPParser
 import socket
 from bcolors import bcolors
+import random
 
 class Server:
     """UDP/TCP server with Sockets."""
 
-    def __init__(self, host: str="127.0.0.1", port: int=51234,
+    def __init__(self, host: str="127.0.0.1", port: int=50123,
                  buffer_size: int=1024):
-
         self.host = host
         self.port = port
         self.buffer_size = buffer_size
 
-        self.server_socket = socket.socket(socket.AF_INET,
-                                           socket.SOCK_STREAM)
         self.server_socket.bind((host, port))
-        self.server_socket.listen(1)
+
 
     def process_request(self, message: str) -> str:
         """Processes HTTP request and returns response."""
@@ -68,45 +66,141 @@ class Server:
 class TCPServer(Server):
     """Reliable TCP Server."""
 
+    def __init__(self, host: str="127.0.0.1", port: int=50123,
+                 buffer_size: int=1024):
+        self.server_socket = socket.socket(socket.AF_INET,
+                                           socket.SOCK_STREAM)
+        super().__init__(host, port, buffer_size)
+
     def run(self):
         """Runs server until Control+C is called."""
 
         print("{}{}TCP server started.{}".format(bcolors.BOLD,
                                                  bcolors.OKGREEN,
                                                  bcolors.ENDC))
+        try:
+            while True:
+                self.server_socket.listen(1)
+                client_socket, address = self.server_socket.accept()
 
-        client_socket, address = self.server_socket.accept()
+                connected = True
 
-        while True:
-            data = client_socket.recv(self.buffer_size)
+                while connected:
+                    data = client_socket.recv(self.buffer_size)
 
-            if data:
-                print("----------------")
-                print("{}{}Received packet. Data:{}\n{}".format(bcolors.BOLD,
-                                                                bcolors.OKBLUE,
-                                                                bcolors.ENDC,
-                                                                data.decode()))
+                    if data:
+                        print("----------------")
+                        print("{}{}Received packet. Data:{}\n{}".format(
+                            bcolors.BOLD, bcolors.OKBLUE,
+                            bcolors.ENDC, data.decode()))
 
-                response = self.process_request(data.decode())
+                        response = self.process_request(data.decode())
 
-                print("\n{}{}Sending response. Data:{}\n{}".format(
-                      bcolors.BOLD, bcolors.OKBLUE, bcolors.ENDC, response))
-                client_socket.send(response.encode())
-            else:
-                print("----------------")
-                print("{}{}Connection ended.{}".format(bcolors.BOLD,
-                                                       bcolors.WARNING,
-                                                       bcolors.ENDC))
-                break
+                        print("\n{}{}Sending response. Data:{}\n{}".format(
+                              bcolors.BOLD, bcolors.OKBLUE,
+                              bcolors.ENDC, response))
 
-        client_socket.close()
+                        client_socket.send(response.encode())
+
+                    else:
+                        print("----------------")
+                        print("{}{}Connection ended.{}".format(bcolors.BOLD,
+                                                               bcolors.WARNING,
+                                                               bcolors.ENDC))
+                        connected = False
+                        client_socket.close()
+
+        except KeyboardInterrupt:
+            print("----------------")
+            print("{}{}Server aborted.{}".format(bcolors.BOLD, bcolors.WARNING,
+                                                 bcolors.ENDC))
+            sys.exit(0)
 
 
 class UDPReliableServer(Server):
     """UDP Server running on reliable environment."""
-    pass
+
+    def __init__(self, host: str="127.0.0.1", server_port: int=50123,
+                 buffer_size: int=1024, client_port: int=50321):
+        self.server_socket = socket.socket(socket.AF_INET,
+                                           socket.SOCK_DGRAM)
+        self.client_port = client_port
+        super().__init__(host=host, port=server_port, buffer_size=buffer_size)
+
+    def run(self):
+        """Runs server until Control+C is called."""
+
+        print("{}{}UDP server started.{}".format(bcolors.BOLD,
+                                                 bcolors.OKGREEN,
+                                                 bcolors.ENDC))
+        try:
+            while True:
+                data, addr = self.server_socket.recvfrom(self.buffer_size)
+
+                if data:
+                    print("----------------")
+                    print("{}{}Received packet. Data:{}\n{}".format(
+                        bcolors.BOLD, bcolors.OKBLUE,
+                        bcolors.ENDC, data.decode()))
+
+                    response = self.process_request(data.decode())
+
+                    print("\n{}{}Sending response. Data:{}\n{}".format(
+                          bcolors.BOLD, bcolors.OKBLUE,
+                          bcolors.ENDC, response))
+
+                    self.server_socket.sendto(response.encode(),
+                                              (self.host, self.client_port))
+
+        except KeyboardInterrupt:
+            print("----------------")
+            print("{}{}Server aborted.{}".format(bcolors.BOLD, bcolors.WARNING,
+                                                 bcolors.ENDC))
+            sys.exit(0)
 
 
-class UDPUnreliableServer(Server):
+class UDPUnreliableServer(UDPReliableServer):
     """UDP Server running on unreliable environment."""
-    pass
+
+    def __init__(self, host: str="127.0.0.1", server_port: int=50123,
+                 buffer_size: int=1024, client_port: int=50321, prob_drop=0.75):
+        """prob_drop: probability of a packet being dropped"""
+
+        self.prob_drop = prob_drop
+        super().__init__(host=host, server_port=server_port,
+                         buffer_size=buffer_size, client_port=client_port)
+
+    def run(self):
+        """Runs server until Control+C is called."""
+
+        print("{}{}UDP server started.{}".format(bcolors.BOLD,
+                                                 bcolors.OKGREEN,
+                                                 bcolors.ENDC))
+        try:
+            while True:
+                data, addr = self.server_socket.recvfrom(self.buffer_size)
+
+                if random.random() >= self.prob_drop:
+                    print("----------------")
+                    print("{}{}Received packet. Data:{}\n{}".format(
+                        bcolors.BOLD, bcolors.OKBLUE,
+                        bcolors.ENDC, data.decode()))
+
+                    response = self.process_request(data.decode())
+
+                    print("\n{}{}Sending response. Data:{}\n{}".format(
+                          bcolors.BOLD, bcolors.OKBLUE,
+                          bcolors.ENDC, response))
+
+                    self.server_socket.sendto(response.encode(),
+                                              (self.host, self.client_port))
+                else:
+                    print("----------------")
+                    print("{}{}Packet received, but dropped.{}\n".format(
+                        bcolors.BOLD, bcolors.FAIL, bcolors.ENDC))
+
+        except KeyboardInterrupt:
+            print("----------------")
+            print("{}{}Server aborted.{}".format(bcolors.BOLD, bcolors.WARNING,
+                                                 bcolors.ENDC))
+            sys.exit(0)

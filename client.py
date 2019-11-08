@@ -4,6 +4,9 @@ import socket
 from http import HTTPRequest, HTTPParser
 from bcolors import bcolors
 
+class TimeoutException(SystemError):
+    pass
+
 def parse_expression(expression: str) -> dict:
     """Returns a dict of the expression."""
 
@@ -30,33 +33,12 @@ class Client:
     def __init__(self, buffer_size: int=1024, debug=False):
         self.debug = debug
         self.buffer_size = buffer_size
-        self.client_socket = socket.socket(socket.AF_INET,
-                                           socket.SOCK_STREAM)
 
     def send(self, message: str):
         raise NotImplementedError
 
     def receive(self) -> str:
         raise NotImplementedError
-
-    def http_send(self, host: str="127.0.0.1", file: str="/",
-                  method: str="GET", params: dict=None, data: str=None):
-
-        http_req = HTTPRequest(host=host)
-        request = http_req.build_request(
-            file=file,
-            method=method,
-            params=params,
-            data=data
-        )
-
-        if self.debug:
-            print("{}{}Sending HTTP Request...{}".format(bcolors.BOLD,
-                                                         bcolors.OKBLUE,
-                                                         bcolors.ENDC))
-            print(request)
-
-        self.send(request)
 
     def process_response(self, message: str) -> str:
         parser = HTTPParser()
@@ -74,6 +56,11 @@ class Client:
 
 class TCPClient(Client):
     """TCP Client."""
+    def __init__(self, buffer_size: int=1024, debug=False):
+        self.client_socket = socket.socket(socket.AF_INET,
+                                           socket.SOCK_STREAM)
+        super().__init__(buffer_size, debug)
+
 
     def connect(self, host: str="127.0.0.1", port: int=51234):
         """Connect to server."""
@@ -104,6 +91,25 @@ class TCPClient(Client):
 
             total_sent = total_sent + sent
 
+    def http_send(self, host: str="127.0.0.1", file: str="/",
+                  method: str="GET", params: dict=None, data: str=None):
+
+        http_req = HTTPRequest(host=host)
+        request = http_req.build_request(
+            file=file,
+            method=method,
+            params=params,
+            data=data
+        )
+
+        if self.debug:
+            print("{}{}Sending HTTP Request...{}".format(bcolors.BOLD,
+                                                         bcolors.OKBLUE,
+                                                         bcolors.ENDC))
+            print(request)
+
+        self.send(request)
+
 
     def receive(self) -> str:
         chunk = self.client_socket.recv(self.buffer_size)
@@ -118,3 +124,136 @@ class TCPClient(Client):
                                                           chunk.decode()))
 
         return chunk
+
+
+class UDPReliableClient(Client):
+    def __init__(self, buffer_size: int=1024, server_port: int=50321,
+                 server_addr: int="127.0.0.1", debug=False):
+        self.client_socket = socket.socket(socket.AF_INET,
+                                           socket.SOCK_DGRAM)
+        self.server_socket = socket.socket(socket.AF_INET,
+                                           socket.SOCK_DGRAM)
+
+        self.server_port = server_port
+        self.server_addr = server_addr
+
+        self.server_socket.bind((server_addr, server_port))
+
+        self.MAX_TIMEOUT = 2.0
+
+        super().__init__(buffer_size, debug)
+
+
+    def send(self, message: str=None, host: str="127.0.0.1", port: int=50123):
+        if message is None:
+            message = ""
+        message = message.encode()
+
+        self.client_socket.sendto(message, (host, port))
+
+
+    def http_send(self, host: str="127.0.0.1", port: int=50123, file: str="/",
+                 method: str="GET", params: dict=None, data: str=None):
+
+        http_req = HTTPRequest(host=host)
+        request = http_req.build_request(
+            file=file,
+            method=method,
+            params=params,
+            data=data
+        )
+
+
+        if self.debug:
+            print("{}{}Sending HTTP Request...{}".format(bcolors.BOLD,
+                                                         bcolors.OKBLUE,
+                                                         bcolors.ENDC))
+            print(request)
+
+        self.send(message=request, host=host, port=port)
+
+    def receive(self) -> str:
+        data, addr = self.server_socket.recvfrom(self.buffer_size)
+
+        if data == b"":
+            raise RuntimeError("Connection broken")
+
+        else:
+            print("\n{}{}Received response:{}\n{}".format(bcolors.BOLD,
+                                                          bcolors.OKBLUE,
+                                                          bcolors.ENDC,
+                                                          data.decode()))
+
+        return data
+
+
+class UDPUnreliableClient(Client):
+    def __init__(self, buffer_size: int=1024, server_port: int=50321,
+                 server_addr: int="127.0.0.1", debug=False):
+        self.client_socket = socket.socket(socket.AF_INET,
+                                           socket.SOCK_DGRAM)
+        self.server_socket = socket.socket(socket.AF_INET,
+                                           socket.SOCK_DGRAM)
+
+        self.server_port = server_port
+        self.server_addr = server_addr
+
+        self.server_socket.bind((server_addr, server_port))
+
+        self.MAX_TIMEOUT = 2.0
+
+        super().__init__(buffer_size, debug)
+
+
+    def send(self, message: str=None, host: str="127.0.0.1", port: int=50123):
+        if message is None:
+            message = ""
+        message = message.encode()
+
+        self.client_socket.sendto(message, (host, port))
+
+
+    def http_req(self, host: str="127.0.0.1", port: int=50123, file: str="/",
+                 method: str="GET", params: dict=None, data: str=None):
+
+        http_req = HTTPRequest(host=host)
+        request = http_req.build_request(
+            file=file,
+            method=method,
+            params=params,
+            data=data
+        )
+
+        current_timeout = 0.1
+
+        while True:
+            self.server_socket.settimeout(current_timeout)
+
+            if self.debug:
+                print("{}{}Sending HTTP Request...{}".format(bcolors.BOLD,
+                                                             bcolors.OKBLUE,
+                                                             bcolors.ENDC))
+                print(request)
+
+            self.send(message=request, host=host, port=port)
+
+            if current_timeout > 2.0:
+                raise TimeoutException("Timeout exceeded.")
+                break
+
+            try:
+                data, addr = self.server_socket.recvfrom(self.buffer_size)
+
+                if data == b"":
+                    raise RuntimeError("Connection broken")
+                else:
+                    print("\n{}{}Received response:{}\n{}".format(bcolors.BOLD,
+                                                              bcolors.OKBLUE,
+                                                              bcolors.ENDC,
+                                                              data.decode()))
+                    return self.process_response(data.decode())
+
+            except socket.timeout:
+                print("Request timed out. Trying again...\n")
+                current_timeout *= 2
+                continue
