@@ -2,13 +2,14 @@
 import sys
 from bcolors import bcolors
 from client import parse_expression, UDPUnreliableClient, TimeoutException
+from time import sleep
 
 if len(sys.argv) > 1:
     filepath = sys.argv[1]
 else:
     filepath = "expressions.txt"
 
-urc = UDPUnreliableClient(debug=True,
+uuc = UDPUnreliableClient(debug=True,
                           server_port=50321,
                           server_addr="127.0.0.1")
 
@@ -22,7 +23,7 @@ with open(filepath) as fp:
         line = line.replace("\n", "")
 
         try:
-          response = urc.http_req(
+          response = uuc.http_req(
               host="127.0.0.1",
               port=50123,
               file="/",
@@ -46,3 +47,5 @@ with open(filepath) as fp:
                   .format(bcolors.BOLD, bcolors.FAIL,
                           bcolors.ENDC))
             packet_received = True
+
+        sleep(2)

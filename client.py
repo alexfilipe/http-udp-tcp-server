@@ -8,11 +8,12 @@ class TimeoutException(SystemError):
     pass
 
 def parse_expression(expression: str) -> dict:
-    """Returns a dict of the expression."""
+    """Evaluates the expression and returns a dict with
+    the operands and operator."""
 
     expression = expression.strip()
-    expression = re.sub(' +', ' ', expression)
-    params = expression.split(' ')
+    expression = re.sub(" +", " ", expression)
+    params = expression.split(" ")
 
     op = None
     a = None
@@ -61,7 +62,6 @@ class TCPClient(Client):
                                            socket.SOCK_STREAM)
         super().__init__(buffer_size, debug)
 
-
     def connect(self, host: str="127.0.0.1", port: int=51234):
         """Connect to server."""
         if self.debug:
@@ -78,6 +78,7 @@ class TCPClient(Client):
                                                             bcolors.ENDC))
 
     def send(self, message: str):
+        """Send message by chunks until all sent."""
         message_length = len(message)
         message = message.encode()
 

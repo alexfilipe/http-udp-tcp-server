@@ -2,6 +2,7 @@
 import sys
 from bcolors import bcolors
 from client import parse_expression, TCPClient
+from time import sleep
 
 if len(sys.argv) > 1:
     filepath = sys.argv[1]
@@ -38,3 +39,5 @@ with open(filepath) as fp:
             print("{}{}Request invalid: there was an error.{}"
                   .format(bcolors.BOLD, bcolors.FAIL,
                           bcolors.ENDC))
+
+        sleep(2)

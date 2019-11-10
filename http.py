@@ -99,6 +99,7 @@ class HTTPResponse:
             "Date: {{date}}\r\n"
             "Content-Type: {content_type}\r\n"
             "Server: {server}\r\n"
+            "Connection: close\r\n"
         )
 
         self.response_header_template = self.response_header_template.format(
@@ -160,22 +161,24 @@ class HTTPResponse:
 
 
 class HTTPParser:
-    """Class to parse HTTP Responses."""
+    """Class to parse HTTP responses and requests."""
 
     def get_header_fields(self, response: str) -> dict:
+        """Returns a dict of field/values in the header."""
         fields = {}
 
         for line in response.splitlines()[1:]:
             if line == "":
                 break
 
-            split_line = line.split(" ", 1)
-            field = split_line[0][:-1]
-            fields[field] = split_line[1]
+            split_line = line.split(":", 1)
+            field = split_line[0].strip()
+            fields[field] = split_line[1].strip()
 
         return fields
 
     def get_contents(self, response: str) -> dict:
+        """Gets data in the message."""
         split_response = response.split("\r\n\r\n", 1)
 
         if len(split_response) == 1:
@@ -196,6 +199,7 @@ class HTTPParser:
         }
 
     def get_params(self, request: str) -> dict:
+        """Gets params sent in POST request."""
         params = self.get_contents(request)
 
         if params:
@@ -210,9 +214,12 @@ class HTTPParser:
         return request.splitlines()[0].split(" ")[1]
 
     def parse_request(self, request: str) -> dict:
-        return {
-            "method": self.get_method(request),
-            "fields": self.get_header_fields(request),
-            "file": self.get_filename(request),
-            "params": self.get_params(request)
-        }
+        try:
+            return {
+                "method": self.get_method(request),
+                "fields": self.get_header_fields(request),
+                "file": self.get_filename(request),
+                "params": self.get_params(request)
+            }
+        except Exception:
+            return False

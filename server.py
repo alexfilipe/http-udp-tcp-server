@@ -114,6 +114,7 @@ class TCPServer(Server):
             print("----------------")
             print("{}{}Server aborted.{}".format(bcolors.BOLD, bcolors.WARNING,
                                                  bcolors.ENDC))
+            self.server_socket.close()
             sys.exit(0)
 
 
@@ -156,11 +157,13 @@ class UDPReliableServer(Server):
             print("----------------")
             print("{}{}Server aborted.{}".format(bcolors.BOLD, bcolors.WARNING,
                                                  bcolors.ENDC))
+            self.server_socket.close()
             sys.exit(0)
 
 
 class UDPUnreliableServer(UDPReliableServer):
-    """UDP Server running on unreliable environment."""
+    """UDP Server running on unreliable environment.
+    This server drops a received UDP packet with a certain probability."""
 
     def __init__(self, host: str="127.0.0.1", server_port: int=50123,
                  buffer_size: int=1024, client_port: int=50321, prob_drop=0.75):
@@ -176,10 +179,13 @@ class UDPUnreliableServer(UDPReliableServer):
         print("{}{}UDP server started.{}".format(bcolors.BOLD,
                                                  bcolors.OKGREEN,
                                                  bcolors.ENDC))
+
+        # Run server until Ctrl+C is pressed."""
         try:
             while True:
                 data, addr = self.server_socket.recvfrom(self.buffer_size)
 
+                # Drop packet with a given probability
                 if random.random() >= self.prob_drop:
                     print("----------------")
                     print("{}{}Received packet. Data:{}\n{}".format(
@@ -203,4 +209,5 @@ class UDPUnreliableServer(UDPReliableServer):
             print("----------------")
             print("{}{}Server aborted.{}".format(bcolors.BOLD, bcolors.WARNING,
                                                  bcolors.ENDC))
+            self.server_socket.close()
             sys.exit(0)
