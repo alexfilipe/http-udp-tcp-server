@@ -7,7 +7,8 @@ from time import sleep
 if len(sys.argv) > 1:
     filepath = sys.argv[1]
 else:
-    filepath = "expressions.txt"
+    print("USAGE: python UDP-unreliable-Client.py [input-file]")
+    sys.exit(0)
 
 uuc = UDPUnreliableClient(debug=True,
                           server_port=50321,
@@ -48,4 +49,4 @@ with open(filepath) as fp:
                           bcolors.ENDC))
             packet_received = True
 
-        sleep(2)
+        sleep(1)

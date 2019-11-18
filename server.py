@@ -121,12 +121,11 @@ class TCPServer(Server):
 class UDPReliableServer(Server):
     """UDP Server running on reliable environment."""
 
-    def __init__(self, host: str="127.0.0.1", server_port: int=50123,
-                 buffer_size: int=1024, client_port: int=50321):
+    def __init__(self, host: str="127.0.0.1", port: int=50123,
+                 buffer_size: int=1024):
         self.server_socket = socket.socket(socket.AF_INET,
                                            socket.SOCK_DGRAM)
-        self.client_port = client_port
-        super().__init__(host=host, port=server_port, buffer_size=buffer_size)
+        super().__init__(host=host, port=port, buffer_size=buffer_size)
 
     def run(self):
         """Runs server until Control+C is called."""
@@ -137,6 +136,8 @@ class UDPReliableServer(Server):
         try:
             while True:
                 data, addr = self.server_socket.recvfrom(self.buffer_size)
+
+                print("Address:", addr)
 
                 if data:
                     print("----------------")
@@ -151,7 +152,7 @@ class UDPReliableServer(Server):
                           bcolors.ENDC, response))
 
                     self.server_socket.sendto(response.encode(),
-                                              (self.host, self.client_port))
+                                              (self.host, addr[1]))
 
         except KeyboardInterrupt:
             print("----------------")
@@ -165,13 +166,12 @@ class UDPUnreliableServer(UDPReliableServer):
     """UDP Server running on unreliable environment.
     This server drops a received UDP packet with a certain probability."""
 
-    def __init__(self, host: str="127.0.0.1", server_port: int=50123,
-                 buffer_size: int=1024, client_port: int=50321, prob_drop=0.75):
+    def __init__(self, host: str="127.0.0.1", port: int=50123,
+                 buffer_size: int=1024, prob_drop=0.75):
         """prob_drop: probability of a packet being dropped"""
 
         self.prob_drop = prob_drop
-        super().__init__(host=host, server_port=server_port,
-                         buffer_size=buffer_size, client_port=client_port)
+        super().__init__(host=host, port=port, buffer_size=buffer_size)
 
     def run(self):
         """Runs server until Control+C is called."""
@@ -199,7 +199,7 @@ class UDPUnreliableServer(UDPReliableServer):
                           bcolors.ENDC, response))
 
                     self.server_socket.sendto(response.encode(),
-                                              (self.host, self.client_port))
+                                              (self.host, addr[1]))
                 else:
                     print("----------------")
                     print("{}{}Packet received, but dropped.{}\n".format(

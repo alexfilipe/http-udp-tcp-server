@@ -7,7 +7,8 @@ from time import sleep
 if len(sys.argv) > 1:
     filepath = sys.argv[1]
 else:
-    filepath = "expressions.txt"
+    print("USAGE: python UDP-unreliable-Client.py [input-file]")
+    sys.exit(0)
 
 tc = TCPClient(debug=True)
 tc.connect(host="127.0.0.1", port=50123)
@@ -40,4 +41,4 @@ with open(filepath) as fp:
                   .format(bcolors.BOLD, bcolors.FAIL,
                           bcolors.ENDC))
 
-        sleep(2)
+        sleep(1)

@@ -1,12 +1,16 @@
+import sys
 from server import UDPUnreliableServer
 from bcolors import bcolors
 
-print("{}{}Type in probability of dropping a packet: {}".
-      format(bcolors.BOLD, bcolors.OKBLUE, bcolors.ENDC), end="")
-prob_drop = float(input())
+if len(sys.argv) > 1:
+    prob_drop = float(sys.argv[1])
+else:
+    print("USAGE: python UDP-unreliable-Server.py [probability]\n"
+          "    where [probability] is a float between 0.0 and 1.0\n"
+          "    representing the probability of dropping a packet")
+    sys.exit(0)
 
 us = UDPUnreliableServer(host="127.0.0.1",
-                         server_port=50123,
-                         client_port=50321,
+                         port=50123,
                          prob_drop=prob_drop)
 us.run()

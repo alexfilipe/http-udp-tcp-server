@@ -130,8 +130,6 @@ class TCPClient(Client):
 class UDPReliableClient(Client):
     def __init__(self, buffer_size: int=1024, server_port: int=50321,
                  server_addr: int="127.0.0.1", debug=False):
-        self.client_socket = socket.socket(socket.AF_INET,
-                                           socket.SOCK_DGRAM)
         self.server_socket = socket.socket(socket.AF_INET,
                                            socket.SOCK_DGRAM)
 
@@ -150,7 +148,7 @@ class UDPReliableClient(Client):
             message = ""
         message = message.encode()
 
-        self.client_socket.sendto(message, (host, port))
+        self.server_socket.sendto(message, (host, port))
 
 
     def http_send(self, host: str="127.0.0.1", port: int=50123, file: str="/",
@@ -191,8 +189,6 @@ class UDPReliableClient(Client):
 class UDPUnreliableClient(Client):
     def __init__(self, buffer_size: int=1024, server_port: int=50321,
                  server_addr: int="127.0.0.1", debug=False):
-        self.client_socket = socket.socket(socket.AF_INET,
-                                           socket.SOCK_DGRAM)
         self.server_socket = socket.socket(socket.AF_INET,
                                            socket.SOCK_DGRAM)
 
@@ -211,7 +207,7 @@ class UDPUnreliableClient(Client):
             message = ""
         message = message.encode()
 
-        self.client_socket.sendto(message, (host, port))
+        self.server_socket.sendto(message, (host, port))
 
 
     def http_req(self, host: str="127.0.0.1", port: int=50123, file: str="/",
