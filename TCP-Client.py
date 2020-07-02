@@ -7,7 +7,7 @@ from time import sleep
 if len(sys.argv) > 1:
     filepath = sys.argv[1]
 else:
-    print("USAGE: python UDP-unreliable-Client.py [input-file]")
+    print("USAGE: python TCP-Client.py [input-file]")
     sys.exit(0)
 
 tc = TCPClient(debug=True)
