@@ -1,5 +1,6 @@
 import socket
-from http import HTTPRequest, HTTPResponse, HTTPParser
+
+from .http import HTTPRequest
 
 server = "www.inspirasonho.com.br"
 file = "/sobre"

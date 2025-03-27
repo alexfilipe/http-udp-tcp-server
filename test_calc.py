@@ -1,4 +1,4 @@
-from calc import Calculator, OperationIncomplete, InvalidOperation, NotAnInteger
+from .calc import Calculator, InvalidOperation, NotAnInteger, OperationIncomplete
 
 calc = Calculator()
 

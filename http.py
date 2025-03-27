@@ -1,7 +1,8 @@
 """HTTP Requests and Responses."""
-import re
+
 import urllib
 from email.utils import formatdate
+
 
 class Status406(SystemError):
     pass
@@ -10,7 +11,7 @@ class Status406(SystemError):
 class HTTPRequest:
     """Class for building HTTP requests."""
 
-    def __init__(self, host: str="127.0.0.1"):
+    def __init__(self, host: str = "127.0.0.1"):
         self.http_version = "HTTP/1.1"
 
         self.server = "calculator/0.1"
@@ -28,7 +29,7 @@ class HTTPRequest:
         self.post_header_template = self.post_header_template.format(
             http_version=self.http_version,
             host=self.host,
-            content_type=self.content_type
+            content_type=self.content_type,
         )
 
         self.get_header_template = (
@@ -40,7 +41,7 @@ class HTTPRequest:
         self.get_header_template = self.get_header_template.format(
             http_version=self.http_version,
             host=self.host,
-            content_type=self.content_type
+            content_type=self.content_type,
         )
 
     def __build_post(self, params: dict, data: str, file: str) -> str:
@@ -55,7 +56,6 @@ class HTTPRequest:
 
         return request
 
-
     def __build_get(self, params: dict, data: str, file: str) -> str:
         request = self.get_header_template.format(file=file)
 
@@ -67,9 +67,13 @@ class HTTPRequest:
 
         return request
 
-
-    def build_request(self, params: dict=None, data: str=None,
-                      file: str="/", method: str="POST") -> str:
+    def build_request(
+        self,
+        params: dict = None,
+        data: str = None,
+        file: str = "/",
+        method: str = "POST",
+    ) -> str:
         """Build HTTP request with data and parameters."""
         if method == "POST":
             return self.__build_post(file=file, params=params, data=data)
@@ -85,10 +89,7 @@ class HTTPResponse:
     def __init__(self):
         self.http_version = "HTTP/1.1"
 
-        self.status_codes = {
-            200: "200 OK",
-            406: "406 Not Acceptable"
-        }
+        self.status_codes = {200: "200 OK", 406: "406 Not Acceptable"}
 
         self.content_type = "text/plain"
 
@@ -105,23 +106,19 @@ class HTTPResponse:
         self.response_header_template = self.response_header_template.format(
             version=self.http_version,
             server=self.server,
-            content_type=self.content_type
+            content_type=self.content_type,
         )
-
 
     def __gmt_date(self):
         """Return current datetime in GMT format."""
 
         return formatdate(timeval=None, localtime=False, usegmt=True)
 
-
-    def __build_200(self, data: str=None) -> str:
+    def __build_200(self, data: str = None) -> str:
         """Build 200 OK response."""
 
         response = self.response_header_template.format(
-            status=self.status_codes[200],
-            date=self.__gmt_date(),
-            data=data
+            status=self.status_codes[200], date=self.__gmt_date(), data=data
         )
 
         if data is not None:
@@ -131,13 +128,10 @@ class HTTPResponse:
 
         return response
 
-
-    def __build_406(self, data: str=None) -> str:
+    def __build_406(self, data: str = None) -> str:
         """Build 406 Not Acceptable response."""
         response = self.response_header_template.format(
-            status=self.status_codes[406],
-            date=self.__gmt_date(),
-            data=data
+            status=self.status_codes[406], date=self.__gmt_date(), data=data
         )
 
         if data is not None:
@@ -147,8 +141,7 @@ class HTTPResponse:
 
         return response
 
-
-    def build_response(self, data: str=None, status: int=200) -> str:
+    def build_response(self, data: str = None, status: int = 200) -> str:
         """Build the HTTP response."""
         response = ""
 
@@ -219,7 +212,7 @@ class HTTPParser:
                 "method": self.get_method(request),
                 "fields": self.get_header_fields(request),
                 "file": self.get_filename(request),
-                "params": self.get_params(request)
+                "params": self.get_params(request),
             }
         except Exception:
             return False

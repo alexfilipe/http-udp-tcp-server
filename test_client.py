@@ -1,4 +1,4 @@
-from client import TCPClient
+from .client import TCPClient
 
 tc = TCPClient()
 

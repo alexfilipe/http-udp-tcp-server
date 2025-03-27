@@ -2,18 +2,22 @@
 
 import re
 
+
 class OperationIncomplete(ValueError):
     pass
+
 
 class InvalidOperation(ValueError):
     pass
 
+
 class NotAnInteger(ValueError):
     pass
 
+
 class Calculator:
     def __init__(self):
-        self.operations = set(['+', '-', '*', '/'])
+        self.operations = set(["+", "-", "*", "/"])
 
     def add(self, a: int, b: int) -> int:
         return a + b
@@ -26,7 +30,7 @@ class Calculator:
 
     def divide(self, a: int, b: int) -> int:
         if b == 0:
-            raise ZeroDivisionError('Division by zero not allowed')
+            raise ZeroDivisionError("Division by zero not allowed")
 
         return a / b
 
@@ -35,17 +39,17 @@ class Calculator:
 
         # Remove multiple spaces
         message = message.strip()
-        message = re.sub(' +', ' ', message)
+        message = re.sub(" +", " ", message)
 
         # Check for number of arguments
-        params = message.split(' ')
+        params = message.split(" ")
         if len(params) < 3:
-            raise OperationIncomplete('Not enough arguments')
+            raise OperationIncomplete("Not enough arguments")
 
         # Check for supported operations
         op = params[0]
         if op not in self.operations:
-            raise InvalidOperation('Operation not supported')
+            raise InvalidOperation("Operation not supported")
 
         # TODO: ASK IF STRING CAN BE e.g. 2.0
         # Transform strings in integers
@@ -53,18 +57,18 @@ class Calculator:
             a = int(params[1])
             b = int(params[2])
         except ValueError:
-            raise NotAnInteger('One of the operands is not an integer')
+            raise NotAnInteger("One of the operands is not an integer")
 
         # Run operations and return result
         result = 0
 
-        if op == '+':
+        if op == "+":
             result = self.add(a, b)
-        elif op == '-':
+        elif op == "-":
             result = self.subtract(a, b)
-        elif op == '*':
+        elif op == "*":
             result = self.multiply(a, b)
-        elif op == '/':
+        elif op == "/":
             result = self.divide(a, b)
 
         # Normalize float to int

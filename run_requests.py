@@ -1,6 +1,6 @@
-from http import HTTPRequest, HTTPResponse
-from calc import Calculator
-from bcolors import bcolors
+from .bcolors import bcolors
+from .calc import Calculator
+from .http import HTTPRequest, HTTPResponse
 
 http_req = HTTPRequest(host="127.0.0.1")
 http_resp = HTTPResponse()
@@ -8,8 +8,12 @@ calc = Calculator()
 
 exp = ""
 while True:
-    print("{}{}Type in your expression: {}"
-          .format(bcolors.OKBLUE, bcolors.BOLD, bcolors.ENDC), end="")
+    print(
+        "{}{}Type in your expression: {}".format(
+            bcolors.OKBLUE, bcolors.BOLD, bcolors.ENDC
+        ),
+        end="",
+    )
     exp = input()
 
     print()
@@ -17,9 +21,7 @@ while True:
     if exp == "exit":
         break
 
-    request = http_req.build_request(method="POST", params={
-        "expression": exp
-    })
+    request = http_req.build_request(method="POST", params={"expression": exp})
 
     print("{}Making HTTP request...{}".format(bcolors.OKGREEN, bcolors.ENDC))
     print("----------------------")
@@ -40,9 +42,9 @@ while True:
         print(response, "\n")
 
     except Exception as ex:
-        print("An exception occurred: {} ({}).".format(
-            str(ex), type(ex).__name__
-        ), "\n")
+        print(
+            "An exception occurred: {} ({}).".format(str(ex), type(ex).__name__), "\n"
+        )
 
         print("{}Retrieving HTTP response...{}".format(bcolors.OKGREEN, bcolors.ENDC))
         print("---------------------------")
