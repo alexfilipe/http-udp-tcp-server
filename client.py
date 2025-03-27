@@ -36,7 +36,11 @@ def parse_expression(expression: str) -> dict:
 class Client:
     """TCP/UDP Client."""
 
-    def __init__(self, buffer_size: int = 1024, debug=False):
+    def __init__(
+        self,
+        buffer_size: int = 1024,
+        debug: bool = False,
+    ):
         self.debug = debug
         self.buffer_size = buffer_size
 
@@ -63,7 +67,11 @@ class Client:
 class TCPClient(Client):
     """TCP Client."""
 
-    def __init__(self, buffer_size: int = 1024, debug=False):
+    def __init__(
+        self,
+        buffer_size: int = 1024,
+        debug: bool = False,
+    ):
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         super().__init__(buffer_size, debug)
 
@@ -146,7 +154,7 @@ class UDPReliableClient(Client):
         buffer_size: int = 1024,
         server_port: int = 50321,
         server_addr: int = "127.0.0.1",
-        debug=False,
+        debug: bool = False,
     ):
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
@@ -213,7 +221,8 @@ class UDPUnreliableClient(Client):
         buffer_size: int = 1024,
         server_port: int = 50321,
         server_addr: int = "127.0.0.1",
-        debug=False,
+        debug: bool = False,
+        max_timeout: float = 2.0,
     ):
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
@@ -222,7 +231,7 @@ class UDPUnreliableClient(Client):
 
         self.server_socket.bind((server_addr, server_port))
 
-        self.MAX_TIMEOUT = 2.0
+        self.max_timeout = max_timeout
 
         super().__init__(buffer_size, debug)
 
@@ -263,9 +272,8 @@ class UDPUnreliableClient(Client):
 
             self.send(message=request, host=host, port=port)
 
-            if current_timeout > 2.0:
+            if current_timeout > self.max_timeout:
                 raise TimeoutException("Timeout exceeded.")
-                break
 
             try:
                 data, addr = self.server_socket.recvfrom(self.buffer_size)
