@@ -1,6 +1,6 @@
 import sys
 
-from .server import UDPUnreliableServer
+from http_suite.server import UDPUnreliableServer
 
 if len(sys.argv) > 1:
     prob_drop = float(sys.argv[1])

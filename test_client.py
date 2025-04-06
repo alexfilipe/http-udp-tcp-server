@@ -1,4 +1,4 @@
-from .client import TCPClient
+from http_suite.client import TCPClient
 
 tc = TCPClient()
 

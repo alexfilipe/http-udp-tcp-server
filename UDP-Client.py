@@ -3,8 +3,8 @@
 import sys
 from time import sleep
 
-from .bcolors import bcolors
-from .client import UDPReliableClient, parse_expression
+from http_suite.bcolors import bcolors
+from http_suite.client import UDPReliableClient, parse_expression
 
 if len(sys.argv) > 1:
     filepath = sys.argv[1]

@@ -1,4 +1,4 @@
-from .http import HTTPParser, HTTPRequest, HTTPResponse
+from http_suite.http import HTTPParser, HTTPRequest, HTTPResponse
 
 http_parser = HTTPParser()
 

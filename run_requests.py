@@ -1,6 +1,6 @@
-from .bcolors import bcolors
-from .calc import Calculator
-from .http import HTTPRequest, HTTPResponse
+from http_suite.bcolors import bcolors
+from http_suite.calc import Calculator
+from http_suite.http import HTTPRequest, HTTPResponse
 
 http_req = HTTPRequest(host="127.0.0.1")
 http_resp = HTTPResponse()

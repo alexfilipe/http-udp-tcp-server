@@ -1,4 +1,9 @@
-from .calc import Calculator, InvalidOperation, NotAnInteger, OperationIncomplete
+from http_suite.calc import (
+    Calculator,
+    InvalidOperation,
+    NotAnInteger,
+    OperationIncomplete,
+)
 
 calc = Calculator()
 
