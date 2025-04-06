@@ -235,7 +235,12 @@ class UDPUnreliableClient(Client):
 
         super().__init__(buffer_size, debug)
 
-    def send(self, message: str = None, host: str = "127.0.0.1", port: int = 50123):
+    def send(
+        self,
+        message: str = None,
+        host: str = "127.0.0.1",
+        port: int = 50123,
+    ):
         if message is None:
             message = ""
         message = message.encode()
