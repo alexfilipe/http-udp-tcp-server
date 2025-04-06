@@ -8,13 +8,20 @@ from .http import HTTPParser, HTTPRequest
 
 
 class TimeoutException(SystemError):
+    """Exception raised when a timeout occurs."""
+
     pass
 
 
 def parse_expression(expression: str) -> dict:
-    """Evaluates the expression and returns a dict with
-    the operands and operator."""
+    """Evaluates the expression and returns a dict with the operands and operator.
 
+    Args:
+        expression (str): The expression to parse.
+
+    Returns:
+        dict: A dictionary containing the operator and operands.
+    """
     expression = expression.strip()
     expression = re.sub(" +", " ", expression)
     params = expression.split(" ")
@@ -34,7 +41,12 @@ def parse_expression(expression: str) -> dict:
 
 
 class Client:
-    """TCP/UDP Client."""
+    """Base class for TCP/UDP clients.
+
+    Args:
+        buffer_size (int): Size of the buffer for receiving data.
+        debug (bool): Enable or disable debug mode.
+    """
 
     def __init__(
         self,
@@ -45,12 +57,30 @@ class Client:
         self.buffer_size = buffer_size
 
     def send(self, message: str):
+        """Send a message to the server.
+
+        Args:
+            message (str): The message to send.
+        """
         raise NotImplementedError
 
     def receive(self) -> str:
+        """Receive a message from the server.
+
+        Returns:
+            str: The received message.
+        """
         raise NotImplementedError
 
     def process_response(self, message: str) -> str:
+        """Process the server's response.
+
+        Args:
+            message (str): The response message.
+
+        Returns:
+            str: The processed response.
+        """
         parser = HTTPParser()
         response = parser.parse_response(message)
 
@@ -60,12 +90,22 @@ class Client:
             return False
 
     def result(self) -> str:
+        """Get the result from the server.
+
+        Returns:
+            str: The processed response.
+        """
         response = self.receive().decode()
         return self.process_response(response)
 
 
 class TCPClient(Client):
-    """TCP Client."""
+    """TCP Client for communicating with a server.
+
+    Args:
+        buffer_size (int): Size of the buffer for receiving data.
+        debug (bool): Enable or disable debug mode.
+    """
 
     def __init__(
         self,
@@ -76,7 +116,12 @@ class TCPClient(Client):
         super().__init__(buffer_size, debug)
 
     def connect(self, host: str = "127.0.0.1", port: int = 51234):
-        """Connect to server."""
+        """Connect to the server.
+
+        Args:
+            host (str): The server's hostname or IP address.
+            port (int): The server's port number.
+        """
         if self.debug:
             print(
                 "{}{}Connecting to {}...{}".format(
@@ -94,7 +139,11 @@ class TCPClient(Client):
             )
 
     def send(self, message: str):
-        """Send message by chunks until all sent."""
+        """Send a message to the server.
+
+        Args:
+            message (str): The message to send.
+        """
         message_length = len(message)
         message = message.encode()
 
@@ -116,7 +165,15 @@ class TCPClient(Client):
         params: dict = None,
         data: str = None,
     ):
+        """Send an HTTP request to the server.
 
+        Args:
+            host (str): The server's hostname or IP address.
+            file (str): The file path in the HTTP request.
+            method (str): The HTTP method (e.g., GET, POST).
+            params (dict): Query parameters for the request.
+            data (str): Data to include in the request body.
+        """
         http_req = HTTPRequest(host=host)
         request = http_req.build_request(
             file=file, method=method, params=params, data=data
@@ -133,6 +190,11 @@ class TCPClient(Client):
         self.send(request)
 
     def receive(self) -> str:
+        """Receive a response from the server.
+
+        Returns:
+            str: The received response.
+        """
         chunk = self.client_socket.recv(self.buffer_size)
 
         if chunk == b"":
@@ -149,6 +211,15 @@ class TCPClient(Client):
 
 
 class UDPReliableClient(Client):
+    """Reliable UDP Client for communicating with a server.
+
+    Args:
+        buffer_size (int): Size of the buffer for receiving data.
+        server_port (int): The port number to bind the client socket.
+        server_addr (str): The address to bind the client socket.
+        debug (bool): Enable or disable debug mode.
+    """
+
     def __init__(
         self,
         buffer_size: int = 1024,
@@ -168,6 +239,13 @@ class UDPReliableClient(Client):
         super().__init__(buffer_size, debug)
 
     def send(self, message: str = None, host: str = "127.0.0.1", port: int = 50123):
+        """Send a message to the server.
+
+        Args:
+            message (str): The message to send.
+            host (str): The server's hostname or IP address.
+            port (int): The server's port number.
+        """
         if message is None:
             message = ""
         message = message.encode()
@@ -183,7 +261,16 @@ class UDPReliableClient(Client):
         params: dict = None,
         data: str = None,
     ):
+        """Send an HTTP request to the server.
 
+        Args:
+            host (str): The server's hostname or IP address.
+            port (int): The server's port number.
+            file (str): The file path in the HTTP request.
+            method (str): The HTTP method (e.g., GET, POST).
+            params (dict): Query parameters for the request.
+            data (str): Data to include in the request body.
+        """
         http_req = HTTPRequest(host=host)
         request = http_req.build_request(
             file=file, method=method, params=params, data=data
@@ -200,6 +287,11 @@ class UDPReliableClient(Client):
         self.send(message=request, host=host, port=port)
 
     def receive(self) -> str:
+        """Receive a response from the server.
+
+        Returns:
+            str: The received response.
+        """
         data, addr = self.server_socket.recvfrom(self.buffer_size)
 
         if data == b"":
@@ -216,6 +308,16 @@ class UDPReliableClient(Client):
 
 
 class UDPUnreliableClient(Client):
+    """Unreliable UDP Client for communicating with a server.
+
+    Args:
+        buffer_size (int): Size of the buffer for receiving data.
+        server_port (int): The port number to bind the client socket.
+        server_addr (str): The address to bind the client socket.
+        debug (bool): Enable or disable debug mode.
+        max_timeout (float): Maximum timeout for retries.
+    """
+
     def __init__(
         self,
         buffer_size: int = 1024,
@@ -241,6 +343,13 @@ class UDPUnreliableClient(Client):
         host: str = "127.0.0.1",
         port: int = 50123,
     ):
+        """Send a message to the server.
+
+        Args:
+            message (str): The message to send.
+            host (str): The server's hostname or IP address.
+            port (int): The server's port number.
+        """
         if message is None:
             message = ""
         message = message.encode()
@@ -256,7 +365,22 @@ class UDPUnreliableClient(Client):
         params: dict = None,
         data: str = None,
     ):
+        """Send an HTTP request to the server with retries.
 
+        Args:
+            host (str): The server's hostname or IP address.
+            port (int): The server's port number.
+            file (str): The file path in the HTTP request.
+            method (str): The HTTP method (e.g., GET, POST).
+            params (dict): Query parameters for the request.
+            data (str): Data to include in the request body.
+
+        Returns:
+            str: The processed response.
+
+        Raises:
+            TimeoutException: If the maximum timeout is exceeded.
+        """
         http_req = HTTPRequest(host=host)
         request = http_req.build_request(
             file=file, method=method, params=params, data=data

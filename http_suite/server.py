@@ -10,7 +10,13 @@ from .http import HTTPParser, HTTPResponse
 
 
 class Server:
-    """UDP/TCP server with Sockets."""
+    """Base class for UDP/TCP servers using sockets.
+
+    Attributes:
+        host (str): The server's host address.
+        port (int): The server's port number.
+        buffer_size (int): The size of the buffer for receiving data.
+    """
 
     def __init__(
         self, host: str = "127.0.0.1", port: int = 50123, buffer_size: int = 1024
@@ -22,7 +28,14 @@ class Server:
         self.server_socket.bind((host, port))
 
     def process_request(self, message: str) -> str:
-        """Processes HTTP request and returns response."""
+        """Processes an HTTP request and returns an HTTP response.
+
+        Args:
+            message (str): The HTTP request message.
+
+        Returns:
+            str: The HTTP response message.
+        """
         parser = HTTPParser()
         response = HTTPResponse()
         calc = Calculator()
@@ -66,11 +79,18 @@ class Server:
         return ""
 
     def run(self):
+        """Runs the server. Must be implemented by subclasses."""
         raise NotImplementedError
 
 
 class TCPServer(Server):
-    """Reliable TCP Server."""
+    """Reliable TCP server implementation.
+
+    Attributes:
+        host (str): The server's host address. Defaults to "127.0.0.1".
+        port (int): The server's port number. Defaults to 50123.
+        buffer_size (int): The size of the buffer for receiving data. Defaults to 1024.
+    """
 
     def __init__(
         self, host: str = "127.0.0.1", port: int = 50123, buffer_size: int = 1024
@@ -79,8 +99,7 @@ class TCPServer(Server):
         super().__init__(host, port, buffer_size)
 
     def run(self):
-        """Runs server until Control+C is called."""
-
+        """Runs the TCP server until interrupted by the user."""
         print(
             "{}{}TCP server started.{}".format(
                 bcolors.BOLD, bcolors.OKGREEN, bcolors.ENDC
@@ -139,7 +158,13 @@ class TCPServer(Server):
 
 
 class UDPReliableServer(Server):
-    """UDP Server running on reliable environment."""
+    """Reliable UDP server implementation.
+
+    Args:
+        host (str): The server's host address. Defaults to "127.0.0.1".
+        port (int): The server's port number. Defaults to 50123.
+        buffer_size (int): The size of the buffer for receiving data. Defaults to 1024.
+    """
 
     def __init__(
         self, host: str = "127.0.0.1", port: int = 50123, buffer_size: int = 1024
@@ -148,8 +173,7 @@ class UDPReliableServer(Server):
         super().__init__(host=host, port=port, buffer_size=buffer_size)
 
     def run(self):
-        """Runs server until Control+C is called."""
-
+        """Runs the UDP server until interrupted by the user."""
         print(
             "{}{}UDP server started.{}".format(
                 bcolors.BOLD, bcolors.OKGREEN, bcolors.ENDC
@@ -191,8 +215,16 @@ class UDPReliableServer(Server):
 
 
 class UDPUnreliableServer(UDPReliableServer):
-    """UDP Server running on unreliable environment.
-    This server drops a received UDP packet with a certain probability."""
+    """Unreliable UDP server implementation.
+
+    This server drops received UDP packets with a certain probability.
+
+    Args:
+        host (str): The server's host address. Defaults to "127.0.0.1".
+        port (int): The server's port number. Defaults to 50123.
+        buffer_size (int): The size of the buffer for receiving data. Defaults to 1024.
+        prob_drop (float): The probability of dropping a packet. Defaults to 0.75.
+    """
 
     def __init__(
         self,
@@ -201,21 +233,17 @@ class UDPUnreliableServer(UDPReliableServer):
         buffer_size: int = 1024,
         prob_drop=0.75,
     ):
-        """prob_drop: probability of a packet being dropped"""
-
         self.prob_drop = prob_drop
         super().__init__(host=host, port=port, buffer_size=buffer_size)
 
     def run(self):
-        """Runs server until Control+C is called."""
-
+        """Runs the unreliable UDP server until interrupted by the user."""
         print(
             "{}{}UDP server started.{}".format(
                 bcolors.BOLD, bcolors.OKGREEN, bcolors.ENDC
             )
         )
 
-        # Run server until Ctrl+C is pressed."""
         try:
             while True:
                 data, addr = self.server_socket.recvfrom(self.buffer_size)
